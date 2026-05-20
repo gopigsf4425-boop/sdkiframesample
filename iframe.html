@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BoldDesk Ticket</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f5f5f5;
+      padding: 15px;
+      min-height: 100vh;
+    }
+    .container { 
+      max-width: 100%;
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      min-height: 90vh;
+    }
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    header h1 { font-size: 20px; margin-bottom: 3px; }
+    header p { font-size: 11px; opacity: 0.9; }
+    
+    .tabs {
+      display: flex;
+      background: #f0f0f0;
+      border-bottom: 2px solid #ddd;
+      overflow-x: auto;
+    }
+    
+    .tab-button {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    
+    .tab-button.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: white;
+    }
+    
+    .tab-button:hover {
+      background: white;
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 15px;
+      animation: fadeIn 0.3s;
+      min-height: 900px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      padding: 8px 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    button:hover {
+      background: #764ba2;
+      transform: translateY(-1px);
+    }
+    
+    button:active { transform: translateY(0); }
+    
+    .output {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      max-height: 500px;
+      overflow-y: auto;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    .log-entry {
+      margin-bottom: 3px;
+      padding: 3px;
+      border-left: 2px solid transparent;
+    }
+    
+    .log-entry.success { border-left-color: #00ff00; color: #00ff00; }
+    .log-entry.error { border-left-color: #ff6b6b; color: #ff6b6b; }
+    .log-entry.info { border-left-color: #4ecdc4; color: #4ecdc4; }
+    .log-entry.warning { border-left-color: #ffd93d; color: #ffd93d; }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .status-badge.ready {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-badge.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    h3 {
+      color: #667eea;
+      font-size: 13px;
+      margin-bottom: 8px;
+      margin-top: 12px;
+    }
+    
+    h3:first-child { margin-top: 0; }
+    
+    .set-input {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+    
+    .set-input input, .set-input textarea {
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'Monaco', monospace;
+    }
+    
+    .set-input textarea {
+      grid-column: 1 / -1;
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    p {
+      color: #666;
+      margin-bottom: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎟️ BoldDesk Ticket Manager</h1>
+      <span class="status-badge ready" id="status">SDK Loading...</span>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab('get-methods')">📋 GET Ticket Data</button>
+      <button class="tab-button" onclick="switchTab('set-methods')">✏️ SET Ticket Data</button>
+      <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
+      <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
+      <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
+      <button class="tab-button" onclick="switchTab('logs')">📊 Logs</button>
+    </div>
+
+    <!-- GET Methods -->
+    <div id="get-methods" class="tab-content active">
+      <h3>📋 Get Ticket Information</h3>
+      <p>Click buttons to retrieve ticket data from the platform</p>
+      
+      <div class="test-grid">
+        <button onclick="getTicketData('ticket')">🎫 Get ticket</button>
+        <button onclick="getTicketData('ticket.id')">🆔 Get ticket.id</button>
+        <button onclick="getTicketData('ticket.subject')">📝 Get subject</button>
+        <button onclick="getTicketData('ticket.description')">📄 Get description</button>
+        <button onclick="getTicketData('ticket.resolutiondue')">⏰ Get resolutiondue</button>
+        <button onclick="getTicketData('ticket.responsedue')">⏰ Get responsedue</button>
+        <button onclick="getTicketData('ticket.brand')">🏢 Get brand</button>
+        <button onclick="getTicketData('ticket.requester')">👤 Get requester</button>
+        <button onclick="getTicketData('ticket.contactgroup')">👥 Get contactgroup</button>
+        <button onclick="getTicketData('ticket.agent')">🔧 Get agent</button>
+        <button onclick="getTicketData('ticket.group')">👨‍💼 Get group</button>
+        <button onclick="getTicketData('ticket.category')">🏷️ Get category</button>
+        <button onclick="getTicketData('ticket.priority')">⚡ Get priority</button>
+        <button onclick="getTicketData('ticket.status')">🔖 Get status</button>
+        <button onclick="getTicketData('ticket.type')">📦 Get type</button>
+        <button onclick="getTicketData('ticket.source')">📡 Get source</button>
+        <button onclick="getTicketData('ticket.state')">🔴 Get state</button>
+        <button onclick="getTicketData('ticket.customfields')">⚙️ Get customfields</button>
+      </div>
+      
+      <h3>📊 GET Output</h3>
+      <div id="get-log" class="output"></div>
+    </div>
+
+    <!-- SET Methods -->
+    <div id="set-methods" class="tab-content">
+      <h3>✏️ Set Ticket Information</h3>
+      <p>Enter values below and click SET buttons to update ticket data</p>
+      
+      <div class="set-input">
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Subject:</label>
+          <input type="text" id="subject-val" placeholder="e.g., Ticket Subject" value="Updated Subject">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Priority:</label>
+          <input type="text" id="priority-val" placeholder="e.g., High" value="High">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Status:</label>
+          <input type="text" id="status-val" placeholder="e.g., Open" value="Open">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Category:</label>
+          <input type="text" id="category-val" placeholder="e.g., Support" value="Support">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Type:</label>
+          <input type="text" id="type-val" placeholder="e.g., Bug" value="Bug">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: #333; margin-bottom: 4px;">Source:</label>
+          <input type="text" id="source-val" placeholder="e.g., Email" value="Email">
+        </div>
+        <textarea id="description-val" placeholder="Enter ticket description...">Updated ticket description</textarea>
+      </div>
+
+      <div class="test-grid">
+        <button onclick="setTicketData('ticket.id', 'ticket-001')">🆔 SET ticket.id</button>
+        <button onclick="setTicketData('ticket.subject', document.getElementById('subject-val').value)">📝 SET subject</button>
+        <button onclick="setTicketData('ticket.description', document.getElementById('description-val').value)">📄 SET description</button>
+        <button onclick="setTicketData('ticket.resolutiondue', '2024-12-31T23:59:59Z')">⏰ SET resolutiondue</button>
+        <button onclick="setTicketData('ticket.responsedue', '2024-12-25T23:59:59Z')">⏰ SET responsedue</button>
+        <button onclick="setTicketData('ticket.brand', 'Brand001')">🏢 SET brand</button>
+        <button onclick="setTicketData('ticket.requester', 'req-001')">👤 SET requester</button>
+        <button onclick="setTicketData('ticket.contactgroup', 'cg-001')">👥 SET contactgroup</button>
+        <button onclick="setTicketData('ticket.agent', 'agent-001')">🔧 SET agent</button>
+        <button onclick="setTicketData('ticket.group', 'group-001')">👨‍💼 SET group</button>
+        <button onclick="setTicketData('ticket.category', document.getElementById('category-val').value)">🏷️ SET category</button>
+        <button onclick="setTicketData('ticket.priority', document.getElementById('priority-val').value)">⚡ SET priority</button>
+        <button onclick="setTicketData('ticket.status', document.getElementById('status-val').value)">🔖 SET status</button>
+        <button onclick="setTicketData('ticket.type', document.getElementById('type-val').value)">📦 SET type</button>
+        <button onclick="setTicketData('ticket.source', document.getElementById('source-val').value)">📡 SET source</button>
+        <button onclick="setTicketData('ticket.state', 'active')">🔴 SET state</button>
+        <button onclick="setTicketData('ticket.customfields', JSON.stringify({field1: 'value1'}))">⚙️ SET customfields</button>
+      </div>
+
+      <h3>📊 SET Output</h3>
+      <div id="set-log" class="output"></div>
+    </div>
+
+    <!-- Database API -->
+    <div id="database" class="tab-content">
+      <h3>🗄️ Database API Tests</h3>
+      <p>Test custom data storage using the Database API - Store notes per ticket with get, set, update, and delete operations.</p>
+      
+      <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-left: 3px solid #667eea; border-radius: 4px;">
+        <h4 style="color: #667eea; margin-bottom: 10px;">🔑 Database Key Configuration</h4>
+        <p style="color: #666; font-size: 12px; margin-bottom: 10px;">Format: <strong>ticketId</strong></p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="color: #333; font-weight: 500; font-size: 12px;">Ticket ID:</label>
+            <input id="db-ticketId" type="text" value="ticket-001" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+          </div>
+        </div>
+        <div>
+          <label style="color: #333; font-weight: 500; font-size: 12px;">Notes:</label>
+          <textarea id="db-noteContent" placeholder="Enter your notes here..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-family: 'Monaco', monospace; min-height: 100px; resize: vertical;"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">💾 Database Operations</h4>
+        <div class="test-grid">
+          <button onclick="testDBSet()">💾 Save Notes</button>
+          <button onclick="testDBGet()">📂 Load Notes</button>
+          <button onclick="testDBUpdate()">🔄 Update Notes</button>
+          <button onclick="testDBDelete()">🗑️ Delete Notes</button>
+        </div>
+      </div>
+
+      <h3>📊 Test Output</h3>
+      <div id="database-log" class="output"></div>
+    </div>
+
+    <!-- Events -->
+    <div id="events" class="tab-content">
+      <h3>🎯 Event Listeners</h3>
+      <p>Click "Listen" to start listening to ticket events from the platform</p>
+      
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">🔄 ticket.property.updated</h4>
+        <div class="button-group" style="grid-template-columns: repeat(3, 1fr);">
+          <button onclick="listenToEvent('ticket.property.updated')">👂 Listen</button>
+          <button onclick="hasEventListener('ticket.property.updated')">❓ Has</button>
+          <button onclick="unlistenToEvent('ticket.property.updated')">❌ Remove</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">💬 ticket.reply.added</h4>
+        <div class="button-group" style="grid-template-columns: repeat(3, 1fr);">
+          <button onclick="listenToEvent('ticket.reply.added')">👂 Listen</button>
+          <button onclick="hasEventListener('ticket.reply.added')">❓ Has</button>
+          <button onclick="unlistenToEvent('ticket.reply.added')">❌ Remove</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">📌 ticket.note.added</h4>
+        <div class="button-group" style="grid-template-columns: repeat(3, 1fr);">
+          <button onclick="listenToEvent('ticket.note.added')">👂 Listen</button>
+          <button onclick="hasEventListener('ticket.note.added')">❓ Has</button>
+          <button onclick="unlistenToEvent('ticket.note.added')">❌ Remove</button>
+        </div>
+      </div>
+      
+      <h3>📊 Events Output</h3>
+      <div id="events-log" class="output"></div>
+    </div>
+
+    <!-- Request API -->
+    <div id="request" class="tab-content">
+      <h3>📡 Request API Tests</h3>
+      <p>Click buttons to make HTTP requests using hardcoded values</p>
+      
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">🎟️ BoldDesk API</h4>
+        <div class="test-grid">
+          <button onclick="createBoldDeskTicket()">✉️ Create Ticket</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">🔗 Pipedrive API</h4>
+        <div class="test-grid">
+          <button onclick="getPipedrivePerson()">👤 Get Person Fields</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">🔧 Jira API</h4>
+        <div class="test-grid">
+          <button onclick="getJiraStatus()">📊 Get Status</button>
+        </div>
+      </div>
+
+      <div class="test-grid">
+        <button onclick="clearRequestLogs()">🗑️ Clear Logs</button>
+      </div>
+
+      <h3>📊 Request Output</h3>
+      <div id="request-log" class="output"></div>
+    </div>
+
+    <!-- Logs -->
+    <div id="logs" class="tab-content">
+      <h3>📊 Combined Logs</h3>
+      <div style="margin-bottom: 10px;">
+        <button onclick="clearAllLogs()">🗑️ Clear All Logs</button>
+      </div>
+      <div id="combined-log" class="output" style="min-height: 300px;"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/bolddesk-app-framework-sdk@1.0.29/build/baf_sdk.min.js"></script>
+  <script>
+    let client = null;
+    let getLogs = [];
+    let setLogs = [];
+    let dbLogs = [];
+    let eventLogs = [];
+    let currentTab = 'get-methods';
+    const LOG_LIMIT = 100;
+    const EVENT_NAMES = ['ticket.property.updated', 'ticket.reply.added', 'ticket.note.added'];
+    let eventListeners = {};
+
+    // Initialize SDK
+    console.log('=== Ticket Manager App Starting ===');
+    console.log('BAFClient:', typeof BAFClient);
+
+    if (typeof BAFClient === 'undefined') {
+      addLog('GET', 'SDK Load Failed', 'error', 'BAFClient not available');
+      setStatus('error');
+    } else {
+      client = BAFClient.init();
+      console.log('Client initialized:', typeof client);
+      
+      if (typeof client === 'object' && client !== null && typeof client.get === 'function') {
+        addLog('GET', 'SDK Initialized', 'success', 'BAFClient ready - Ticket Manager active');
+        setStatus('ready');
+
+        // Add DB API namespace to client
+        if (client && typeof client === 'object') {
+          client.db = {
+            set: function(key, value) {
+              return new Promise((resolve, reject) => {
+                const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
+                const message = {
+                  type: 'db.request',
+                  operation: 'set',
+                  key: key,
+                  value: value,
+                  messageId: messageId
+                };
+
+                const handleResponse = function(event) {
+                  if (event.data.type === 'db.response' && event.data.messageId === messageId) {
+                    window.removeEventListener('message', handleResponse);
+                    if (event.data.success) {
+                      resolve(event.data.data);
+                    } else {
+                      reject(event.data.error || new Error('DB set failed'));
+                    }
+                  }
+                };
+
+                window.addEventListener('message', handleResponse);
+                window.parent.postMessage(message, '*');
+              });
+            },
+
+            get: function(key) {
+              return new Promise((resolve, reject) => {
+                const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
+                const message = {
+                  type: 'db.request',
+                  operation: 'get',
+                  key: key,
+                  messageId: messageId
+                };
+
+                const handleResponse = function(event) {
+                  if (event.data.type === 'db.response' && event.data.messageId === messageId) {
+                    window.removeEventListener('message', handleResponse);
+                    if (event.data.success) {
+                      resolve(event.data.data);
+                    } else {
+                      reject(event.data.error || new Error('DB get failed'));
+                    }
+                  }
+                };
+
+                window.addEventListener('message', handleResponse);
+                window.parent.postMessage(message, '*');
+              });
+            },
+
+            update: function(key, value) {
+              return new Promise((resolve, reject) => {
+                const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
+                const message = {
+                  type: 'db.request',
+                  operation: 'update',
+                  key: key,
+                  value: value,
+                  messageId: messageId
+                };
+
+                const handleResponse = function(event) {
+                  if (event.data.type === 'db.response' && event.data.messageId === messageId) {
+                    window.removeEventListener('message', handleResponse);
+                    if (event.data.success) {
+                      resolve(event.data.data);
+                    } else {
+                      reject(event.data.error || new Error('DB update failed'));
+                    }
+                  }
+                };
+
+                window.addEventListener('message', handleResponse);
+                window.parent.postMessage(message, '*');
+              });
+            },
+
+            delete: function(key) {
+              return new Promise((resolve, reject) => {
+                const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
+                const message = {
+                  type: 'db.request',
+                  operation: 'delete',
+                  key: key,
+                  messageId: messageId
+                };
+
+                const handleResponse = function(event) {
+                  if (event.data.type === 'db.response' && event.data.messageId === messageId) {
+                    window.removeEventListener('message', handleResponse);
+                    if (event.data.success) {
+                      resolve(event.data.data);
+                    } else {
+                      reject(event.data.error || new Error('DB delete failed'));
+                    }
+                  }
+                };
+
+                window.addEventListener('message', handleResponse);
+                window.parent.postMessage(message, '*');
+              });
+            }
+          };
+          addLog('GET', 'DB API', 'success', 'Database API namespace added to client');
+        }
+      } else if (client === false) {
+        addLog('GET', 'SDK Init Failed', 'error', 'Missing URL parameters - App must be loaded as iframe with ?origin=...&app_guid=...');
+        setStatus('error');
+      } else {
+        addLog('GET', 'SDK Init Failed', 'error', 'Client type: ' + typeof client);
+        setStatus('error');
+      }
+    }
+
+    // UI Functions
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+      
+      currentTab = tabName;
+      updateLogs();
+    }
+
+    function setStatus(status) {
+      const badge = document.getElementById('status');
+      badge.className = 'status-badge ' + status;
+      badge.textContent = status === 'ready' ? '✅ SDK Ready' : '⚠️ SDK Error';
+    }
+
+    // GET Ticket Data
+    function getTicketData(path) {
+      if (!client) {
+        addLog('GET', path, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+      
+      client.get(path).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addLog('GET', `✅ ${path}`, 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addLog('GET', `❌ ${path}`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    // SET Ticket Data
+    function setTicketData(path, value) {
+      if (!client) {
+        addLog('SET', path, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+      
+      client.set(path, value).then(
+        data => {
+          addLog('SET', `✅ ${path}`, 'success', `Set to: ${typeof value === 'object' ? JSON.stringify(value) : value}`);
+          updateLogs();
+        },
+        err => {
+          addLog('SET', `❌ ${path}`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    // Request API - Create BoldDesk Ticket
+    let requestLogs = [];
+    function createBoldDeskTicket() {
+      if (!client) {
+        addRequestLog('Create Ticket', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const ticketData = {
+        subject: 'New Support Request from SDK',
+        description: 'This is a test ticket created via Request API',
+        brandId: 1,
+        ticketFormId: 46,
+        priorityId: 2,
+        statusId: 1029,
+        requesterId: 1880,
+        fromEmailAddress: 'support1@dev-chat-integration.bolddesk.com'
+      };
+
+      const options = {
+        url: 'https://dev-chat-integration.bolddesk.com/api/v1/tickets?skipDependencyValidation=false',
+        type: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': '{{setting.bolddeskApiKey}}'
+        },
+        data: ticketData
+      };
+
+      addRequestLog('Creating Ticket', 'info', `https://dev-chat-integration.bolddesk.com/api/v1/tickets`);
+      addRequestLog('Request Payload', 'info', JSON.stringify(ticketData, null, 2));
+
+      client.request(options).then(
+        response => {
+          const displayValue = typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response);
+          addRequestLog('✅ Ticket Created', 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addRequestLog('❌ Create Failed', 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function getPipedrivePerson() {
+      if (!client) {
+        addRequestLog('Get Person', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const options = {
+        url: 'https://api.pipedrive.com/v1/persons/2/deals',
+        type: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer {{setting.token}}'
+        }
+      };
+
+      addRequestLog('Fetching Person Fields', 'info', 'https://api.pipedrive.com/v1/persons/2/deals');
+
+      client.request(options).then(
+        response => {
+          const displayValue = typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response);
+          addRequestLog('✅ Person Data Retrieved', 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addRequestLog('❌ Fetch Failed', 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function getJiraStatus() {
+      if (!client) {
+        addRequestLog('Get Jira Status', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const options = {
+        url: 'https://techinnovatorti.atlassian.net/rest/api/3/status',
+        type: 'GET',
+        headers: {
+          'Authorization': 'Basic {{basic_auth.token}}'
+        },
+        basic_auth: {
+          'username': '{{settings.username}}',
+          'password': '{{setting.password}}'
+         },
+      };
+
+      addRequestLog('Fetching Jira Status', 'info', 'https://techinnovatorti.atlassian.net/rest/api/3/status');
+
+      client.request(options).then(
+        response => {
+          const displayValue = typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response);
+          addRequestLog('✅ Jira Status Retrieved', 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addRequestLog('❌ Jira Status Failed', 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function addRequestLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      requestLogs.push(entry);
+      if (requestLogs.length > LOG_LIMIT) requestLogs.shift();
+      console.log(`[REQUEST]`, title, message);
+    }
+
+    function clearRequestLogs() {
+      requestLogs = [];
+      updateLogs();
+      addRequestLog('Logs Cleared', 'info', 'All request logs have been cleared');
+      updateLogs();
+    }
+
+    // Event Listener Management
+    function listenToEvent(eventName) {
+      if (!client) {
+        addEventLog(eventName, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      // Check if already listening
+      if (eventListeners[eventName]) {
+        addEventLog(eventName, 'warning', 'Already listening to this event');
+        updateLogs();
+        return;
+      }
+
+      // Create callback function for this event
+      const callback = function(payload) {
+        const displayValue = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : String(payload);
+        addEventLog(eventName, 'success', `📨 Event received:\n${displayValue}`);
+        updateLogs();
+      };
+
+      // Register the listener
+      client.on(eventName, callback);
+      eventListeners[eventName] = callback;
+      
+      addEventLog(eventName, 'info', `✅ Listener registered - waiting for events`);
+      updateLogs();
+    }
+
+    function hasEventListener(eventName) {
+      if (!client) {
+        addEventLog(eventName, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const has = client.has(eventName);
+      const message = has ? '✅ Listener exists' : '❌ No listener registered';
+      const logType = has ? 'success' : 'info';
+      
+      addEventLog(eventName, logType, message);
+      updateLogs();
+    }
+
+    function unlistenToEvent(eventName) {
+      if (!client) {
+        addEventLog(eventName, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const callback = eventListeners[eventName];
+      if (!callback) {
+        addEventLog(eventName, 'error', 'No listener registered for this event');
+        updateLogs();
+        return;
+      }
+
+      client.off(eventName, callback);
+      delete eventListeners[eventName];
+
+      addEventLog(eventName, 'success', '✅ Listener removed successfully');
+      updateLogs();
+    }
+
+    function addEventLog(eventName, logType, message) {
+      const entry = { eventName, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      eventLogs.push(entry);
+      if (eventLogs.length > LOG_LIMIT) eventLogs.shift();
+      console.log(`[EVENT] ${eventName}:`, message);
+    }
+
+    function notify(message) {
+      console.log('[Notify]', message);
+    }
+
+    // Logging
+    function addLog(type, title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      
+      if (type === 'GET') {
+        getLogs.push(entry);
+        if (getLogs.length > LOG_LIMIT) getLogs.shift();
+      } else if (type === 'SET') {
+        setLogs.push(entry);
+        if (setLogs.length > LOG_LIMIT) setLogs.shift();
+      }
+
+      console.log(`[${logType.toUpperCase()}]`, title, message);
+    }
+
+    function updateLogs() {
+      if (currentTab === 'get-methods') {
+        const getLogDiv = document.getElementById('get-log');
+        if (getLogDiv) {
+          if (getLogs.length > 0) {
+            getLogDiv.innerHTML = getLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            getLogDiv.scrollTop = getLogDiv.scrollHeight;
+          } else {
+            getLogDiv.innerHTML = '<div class="log-entry info">No GET logs yet - click buttons above</div>';
+          }
+        }
+      } else if (currentTab === 'set-methods') {
+        const setLogDiv = document.getElementById('set-log');
+        if (setLogDiv) {
+          if (setLogs.length > 0) {
+            setLogDiv.innerHTML = setLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            setLogDiv.scrollTop = setLogDiv.scrollHeight;
+          } else {
+            setLogDiv.innerHTML = '<div class="log-entry info">No SET logs yet - click buttons above</div>';
+          }
+        }
+      } else if (currentTab === 'database') {
+        const dbLogDiv = document.getElementById('database-log');
+        if (dbLogDiv) {
+          if (dbLogs.length > 0) {
+            dbLogDiv.innerHTML = dbLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            dbLogDiv.scrollTop = dbLogDiv.scrollHeight;
+          } else {
+            dbLogDiv.innerHTML = '<div class="log-entry info">No database logs yet - click buttons above</div>';
+          }
+        }
+      } else if (currentTab === 'events') {
+        const eventsLogDiv = document.getElementById('events-log');
+        if (eventsLogDiv) {
+          if (eventLogs.length > 0) {
+            eventsLogDiv.innerHTML = eventLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.eventName}<br>${log.message}</div>`
+            ).join('');
+            eventsLogDiv.scrollTop = eventsLogDiv.scrollHeight;
+          } else {
+            eventsLogDiv.innerHTML = '<div class="log-entry info">No events yet - waiting for events from platform</div>';
+          }
+        }
+      } else if (currentTab === 'request') {
+        const requestLogDiv = document.getElementById('request-log');
+        if (requestLogDiv) {
+          if (requestLogs.length > 0) {
+            requestLogDiv.innerHTML = requestLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            requestLogDiv.scrollTop = requestLogDiv.scrollHeight;
+          } else {
+            requestLogDiv.innerHTML = '<div class="log-entry info">No requests yet - click buttons above</div>';
+          }
+        }
+      } else if (currentTab === 'logs') {
+        const combinedLogDiv = document.getElementById('combined-log');
+        if (combinedLogDiv) {
+          const allLogs = [...getLogs, ...setLogs].sort((a, b) => {
+            const timeA = new Date('1970/01/01 ' + a.timestamp);
+            const timeB = new Date('1970/01/01 ' + b.timestamp);
+            return timeB - timeA;
+          });
+          
+          if (allLogs.length > 0) {
+            combinedLogDiv.innerHTML = allLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | [${log.type.toUpperCase()}] ${log.title}<br>${log.message}</div>`
+            ).join('');
+            combinedLogDiv.scrollTop = combinedLogDiv.scrollHeight;
+          } else {
+            combinedLogDiv.innerHTML = '<div class="log-entry info">No logs yet - perform GET or SET operations above</div>';
+          }
+        }
+      }
+    }
+
+    // Database API Tests
+    function getNoteKey() {
+      const ticketId = document.getElementById('db-ticketId').value || 'ticket-001';
+      return `${ticketId}`;
+    }
+
+    function testDBSet() {
+      if (!client || !client.db) {
+        addDBLog('Save Notes', 'error', 'Database API not initialized');
+        updateLogs();
+        return;
+      }
+
+      const noteKey = getNoteKey();
+      const notes = document.getElementById('db-noteContent').value;
+
+      if (!notes) {
+        addDBLog('Save Notes', 'error', 'Please enter notes in the textarea');
+        updateLogs();
+        return;
+      }
+
+      addDBLog('Saving Notes', 'info', `Key: ${noteKey}`);
+      client.db.set(noteKey, {notes}).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addDBLog(`✅ Saved (${noteKey})`, 'success', `Notes saved successfully\n${displayValue}`);
+          updateLogs();
+        },
+        err => {
+          addDBLog(`❌ Save Failed (${noteKey})`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function testDBGet() {
+      if (!client || !client.db) {
+        addDBLog('Load Notes', 'error', 'Database API not initialized');
+        updateLogs();
+        return;
+      }
+
+      const noteKey = getNoteKey();
+      
+      addDBLog('Loading Notes', 'info', `Key: ${noteKey}`);
+      client.db.get(noteKey).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addDBLog(`✅ Loaded (${noteKey})`, 'success', displayValue);
+          // Auto-populate textarea with loaded data
+          if (data && typeof data === 'string') {
+            document.getElementById('db-noteContent').value = data;
+          }
+          updateLogs();
+        },
+        err => {
+          addDBLog(`❌ Load Failed (${noteKey})`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function testDBUpdate() {
+      if (!client || !client.db) {
+        addDBLog('Update Notes', 'error', 'Database API not initialized');
+        updateLogs();
+        return;
+      }
+
+      const noteKey = getNoteKey();
+      const notes = document.getElementById('db-noteContent').value;
+
+      if (!notes) {
+        addDBLog('Update Notes', 'error', 'Please enter notes in the textarea');
+        updateLogs();
+        return;
+      }
+
+      addDBLog('Updating Notes', 'info', `Key: ${noteKey}`);
+      client.db.update(noteKey, {notes}).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addDBLog(`✅ Updated (${noteKey})`, 'success', `Notes updated successfully\n${displayValue}`);
+          updateLogs();
+        },
+        err => {
+          addDBLog(`❌ Update Failed (${noteKey})`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function testDBDelete() {
+      if (!client || !client.db) {
+        addDBLog('Delete Notes', 'error', 'Database API not initialized');
+        updateLogs();
+        return;
+      }
+
+      const noteKey = getNoteKey();
+
+      addDBLog('Deleting Notes', 'info', `Key: ${noteKey}`);
+      client.db.delete(noteKey).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addDBLog(`✅ Deleted (${noteKey})`, 'success', `Notes deleted successfully\n${displayValue}`);
+          // Clear textarea on successful delete
+          document.getElementById('db-noteContent').value = '';
+          updateLogs();
+        },
+        err => {
+          addDBLog(`❌ Delete Failed (${noteKey})`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function addDBLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      dbLogs.push(entry);
+      if (dbLogs.length > LOG_LIMIT) dbLogs.shift();
+      console.log(`[DATABASE]`, title, message);
+    }
+
+    function clearAllLogs() {
+      getLogs = [];
+      setLogs = [];
+      dbLogs = [];
+      updateLogs();
+      addLog('GET', 'Logs Cleared', 'info', 'All logs have been cleared');
+      updateLogs();
+    }
+
+    // Initial log
+    addLog('GET', 'App Started', 'info', 'Ticket Manager Ready');
+    updateLogs();
+  </script>
+</body>
+</html>
