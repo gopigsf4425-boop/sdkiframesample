@@ -714,17 +714,6 @@
         return;
       }
 
-      const ticketData = {
-        subject: 'New Support Request from SDK',
-        description: 'This is a test ticket created via Request API',
-        brandId: 1,
-        ticketFormId: 46,
-        priorityId: 2,
-        statusId: 1029,
-        requesterId: 1880,
-        fromEmailAddress: 'support1@dev-chat-integration.bolddesk.com'
-      };
-
       const options = {
         url: 'https://dev-chat-integration.bolddesk.com/api/v1/tickets?skipDependencyValidation=false',
         type: 'POST',
