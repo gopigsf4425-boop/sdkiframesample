@@ -197,6 +197,8 @@
     <div class="tabs">
       <button class="tab-button active" onclick="switchTab('get-methods')">📋 GET Ticket Data</button>
       <button class="tab-button" onclick="switchTab('set-methods')">✏️ SET Ticket Data</button>
+      <button class="tab-button" onclick="switchTab('context')">🧭 Context API</button>
+      <button class="tab-button" onclick="switchTab('metadata')">🪪 Metadata API</button>
       <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
       <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
       <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
@@ -288,6 +290,55 @@
 
       <h3>📊 SET Output</h3>
       <div id="set-log" class="output"></div>
+    </div>
+
+    <!-- Context API -->
+    <div id="context" class="tab-content">
+      <h3>🧭 Context API Tests</h3>
+      <p>Click buttons to retrieve context values directly by path</p>
+
+      <div class="test-grid">
+        <button onclick="getContextData('context.orgId')">Get context.orgId</button>
+        <button onclick="getContextData('context.orgName')">Get context.orgName</button>
+        <button onclick="getContextData('context.brandId')">Get context.brandId</button>
+        <button onclick="getContextData('context.brandName')">Get context.brandName</button>
+        <button onclick="getContextData('context.brandUrl')">Get context.brandUrl</button>
+        <button onclick="getContextData('context.defaultBrandUrl')">Get context.defaultBrandUrl</button>
+        <button onclick="getContextData('context.planId')">Get context.planId</button>
+        <button onclick="getContextData('context.planName')">Get context.planName</button>
+        <button onclick="getContextData('context.module')">Get context.module</button>
+        <button onclick="getContextData('context.objectId')">Get context.objectId</button>
+        <button onclick="getContextData('context.product')">Get context.product</button>
+        <button onclick="getContextData('context.user')">Get context.user</button>
+        <button onclick="getContextData('context.user.id')">Get context.user.id</button>
+        <button onclick="getContextData('context.user.email')">Get context.user.email</button>
+        <button onclick="getContextData('context.user.name')">Get context.user.name</button>
+      </div>
+
+      <h3>📊 Context Output</h3>
+      <div id="context-log" class="output"></div>
+    </div>
+
+    <!-- Metadata API -->
+    <div id="metadata" class="tab-content">
+      <h3>🪪 Metadata API Tests</h3>
+      <p>Click buttons to retrieve metadata values directly by path</p>
+
+      <div class="test-grid">
+        <button onclick="getMetadataData('metadata.appId')">Get metadata.appId</button>
+        <button onclick="getMetadataData('metadata.installationId')">Get metadata.installationId</button>
+        <button onclick="getMetadataData('metadata.appName')">Get metadata.appName</button>
+        <button onclick="getMetadataData('metadata.version')">Get metadata.version</button>
+        <button onclick="getMetadataData('metadata.locations')">Get metadata.locations</button>
+        <button onclick="getMetadataData('metadata.hasAllBrandAccess')">Get metadata.hasAllBrandAccess</button>
+        <button onclick="getMetadataData('metadata.hasReadAccess')">Get metadata.hasReadAccess</button>
+        <button onclick="getMetadataData('metadata.hasWriteAccess')">Get metadata.hasWriteAccess</button>
+        <button onclick="getMetadataData('metadata.isActive')">Get metadata.isActive</button>
+        <button onclick="getMetadataData('metadata.isEnabled')">Get metadata.isEnabled</button>
+      </div>
+
+      <h3>📊 Metadata Output</h3>
+      <div id="metadata-log" class="output"></div>
     </div>
 
     <!-- Database API -->
@@ -409,6 +460,8 @@
     let client = null;
     let getLogs = [];
     let setLogs = [];
+    let contextLogs = [];
+    let metadataLogs = [];
     let dbLogs = [];
     let eventLogs = [];
     let currentTab = 'get-methods';
@@ -610,6 +663,48 @@
       );
     }
 
+    // Context API - direct path access
+    function getContextData(path) {
+      if (!client) {
+        addContextLog(path, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      client.get(path).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addContextLog(`✅ ${path}`, 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addContextLog(`❌ ${path}`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    // Metadata API - direct path access
+    function getMetadataData(path) {
+      if (!client) {
+        addMetadataLog(path, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      client.get(path).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addMetadataLog(`✅ ${path}`, 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addMetadataLog(`❌ ${path}`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
     // Request API - Create BoldDesk Ticket
     let requestLogs = [];
     function createBoldDeskTicket() {
@@ -698,10 +793,12 @@
         url: 'https://techinnovatorti.atlassian.net/rest/api/3/status',
         type: 'GET',
         headers: {
-          'Authorization': 'Basic {{basic_auth.token}}',
+          'Authorization': 'Basic {{basic_auth.token}}'
+        },
+        basic_auth: {
           'username': '{{settings.username}}',
           'password': '{{setting.password}}'
-        }
+         },
       };
 
       addRequestLog('Fetching Jira Status', 'info', 'https://techinnovatorti.atlassian.net/rest/api/3/status');
@@ -850,6 +947,30 @@
             setLogDiv.innerHTML = '<div class="log-entry info">No SET logs yet - click buttons above</div>';
           }
         }
+      } else if (currentTab === 'context') {
+        const contextLogDiv = document.getElementById('context-log');
+        if (contextLogDiv) {
+          if (contextLogs.length > 0) {
+            contextLogDiv.innerHTML = contextLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            contextLogDiv.scrollTop = contextLogDiv.scrollHeight;
+          } else {
+            contextLogDiv.innerHTML = '<div class="log-entry info">No context logs yet - click buttons above</div>';
+          }
+        }
+      } else if (currentTab === 'metadata') {
+        const metadataLogDiv = document.getElementById('metadata-log');
+        if (metadataLogDiv) {
+          if (metadataLogs.length > 0) {
+            metadataLogDiv.innerHTML = metadataLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            metadataLogDiv.scrollTop = metadataLogDiv.scrollHeight;
+          } else {
+            metadataLogDiv.innerHTML = '<div class="log-entry info">No metadata logs yet - click buttons above</div>';
+          }
+        }
       } else if (currentTab === 'database') {
         const dbLogDiv = document.getElementById('database-log');
         if (dbLogDiv) {
@@ -889,7 +1010,7 @@
       } else if (currentTab === 'logs') {
         const combinedLogDiv = document.getElementById('combined-log');
         if (combinedLogDiv) {
-          const allLogs = [...getLogs, ...setLogs].sort((a, b) => {
+          const allLogs = [...getLogs, ...setLogs, ...contextLogs, ...metadataLogs].sort((a, b) => {
             const timeA = new Date('1970/01/01 ' + a.timestamp);
             const timeB = new Date('1970/01/01 ' + b.timestamp);
             return timeB - timeA;
@@ -1032,9 +1153,25 @@
       console.log(`[DATABASE]`, title, message);
     }
 
+    function addContextLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      contextLogs.push(entry);
+      if (contextLogs.length > LOG_LIMIT) contextLogs.shift();
+      console.log(`[CONTEXT]`, title, message);
+    }
+
+    function addMetadataLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      metadataLogs.push(entry);
+      if (metadataLogs.length > LOG_LIMIT) metadataLogs.shift();
+      console.log(`[METADATA]`, title, message);
+    }
+
     function clearAllLogs() {
       getLogs = [];
       setLogs = [];
+      contextLogs = [];
+      metadataLogs = [];
       dbLogs = [];
       updateLogs();
       addLog('GET', 'Logs Cleared', 'info', 'All logs have been cleared');
