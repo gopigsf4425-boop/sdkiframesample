@@ -732,7 +732,16 @@
           'Content-Type': 'application/json',
           'x-api-key': '{{setting.bolddeskApiKey}}'
         },
-        data: ticketData
+        data: JSON.stringify({
+        subject: 'New Support Request from SDK',
+        description: 'This is a test ticket created via Request API',
+        brandId: 1,
+        ticketFormId: 46,
+        priorityId: 2,
+        statusId: 1029,
+        requesterId: 1880,
+        fromEmailAddress: 'support1@dev-chat-integration.bolddesk.com'
+      })
       };
 
       addRequestLog('Creating Ticket', 'info', `https://dev-chat-integration.bolddesk.com/api/v1/tickets`);
