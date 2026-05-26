@@ -734,8 +734,6 @@
       };
 
       addRequestLog('Creating Ticket', 'info', `https://dev-chat-integration.bolddesk.com/api/v1/tickets`);
-      addRequestLog('Request Payload', 'info', JSON.stringify(ticketData, null, 2));
-
       client.request(options).then(
         response => {
           const displayValue = typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response);
