@@ -202,6 +202,7 @@
       <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
       <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
       <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
+      <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings API</button>
       <button class="tab-button" onclick="switchTab('logs')">📊 Logs</button>
     </div>
 
@@ -445,6 +446,31 @@
       <div id="request-log" class="output"></div>
     </div>
 
+    <!-- Settings API -->
+    <div id="settings" class="tab-content">
+      <h3>⚙️ Settings API Tests</h3>
+      <p>Test retrieving application settings.</p>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #764ba2; margin-bottom: 10px;">🔧 Settings Operations</h4>
+        <div class="test-grid">
+          <button onclick="testSettingGetAll()">📋 Get All Settings</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-left: 3px solid #667eea; border-radius: 4px;">
+        <h4 style="color: #667eea; margin-bottom: 10px;">📝 Setting Key Input</h4>
+        <p style="color: #666; font-size: 12px; margin-bottom: 10px;">Enter a setting key to retrieve its value:</p>
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px;">
+          <input id="settingKey" type="text" placeholder="e.g., bolddeskApiKey, username, password" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+          <button onclick="testSettingGetCustom()" style="padding: 10px 20px;">Get Setting</button>
+        </div>
+      </div>
+
+      <h3>📊 Settings Output</h3>
+      <div id="settings-log" class="output"></div>
+    </div>
+
     <!-- Logs -->
     <div id="logs" class="tab-content">
       <h3>📊 Combined Logs</h3>
@@ -464,6 +490,7 @@
     let metadataLogs = [];
     let dbLogs = [];
     let eventLogs = [];
+    let settingsLogs = [];
     let currentTab = 'get-methods';
     const LOG_LIMIT = 100;
     const EVENT_NAMES = ['ticket.property.updated', 'ticket.reply.added', 'ticket.note.added'];
@@ -1003,10 +1030,22 @@
             requestLogDiv.innerHTML = '<div class="log-entry info">No requests yet - click buttons above</div>';
           }
         }
+      } else if (currentTab === 'settings') {
+        const settingsLogDiv = document.getElementById('settings-log');
+        if (settingsLogDiv) {
+          if (settingsLogs.length > 0) {
+            settingsLogDiv.innerHTML = settingsLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            settingsLogDiv.scrollTop = settingsLogDiv.scrollHeight;
+          } else {
+            settingsLogDiv.innerHTML = '<div class="log-entry info">No settings logs yet - click buttons above</div>';
+          }
+        }
       } else if (currentTab === 'logs') {
         const combinedLogDiv = document.getElementById('combined-log');
         if (combinedLogDiv) {
-          const allLogs = [...getLogs, ...setLogs, ...contextLogs, ...metadataLogs].sort((a, b) => {
+          const allLogs = [...getLogs, ...setLogs, ...contextLogs, ...metadataLogs, ...settingsLogs].sort((a, b) => {
             const timeA = new Date('1970/01/01 ' + a.timestamp);
             const timeB = new Date('1970/01/01 ' + b.timestamp);
             return timeB - timeA;
@@ -1163,12 +1202,67 @@
       console.log(`[METADATA]`, title, message);
     }
 
+    function addSettingsLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      settingsLogs.push(entry);
+      if (settingsLogs.length > LOG_LIMIT) settingsLogs.shift();
+      console.log(`[SETTINGS]`, title, message);
+    }
+
+    function testSettingGetAll() {
+      if (!client || !client.setting) {
+        addSettingsLog('Get All Settings', 'error', 'Settings API not initialized');
+        updateLogs();
+        return;
+      }
+
+      client.setting().then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addSettingsLog('✅ Get All Settings', 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addSettingsLog('❌ Get All Settings', 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function testSettingGetCustom() {
+      if (!client || !client.setting) {
+        addSettingsLog('Get Setting', 'error', 'Settings API not initialized');
+        updateLogs();
+        return;
+      }
+
+      const key = document.getElementById('settingKey').value.trim();
+      if (!key) {
+        addSettingsLog('Get Setting', 'error', 'Please enter a setting key');
+        updateLogs();
+        return;
+      }
+
+      client.setting(key).then(
+        data => {
+          const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          addSettingsLog(`✅ ${key}`, 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addSettingsLog(`❌ ${key}`, 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
     function clearAllLogs() {
       getLogs = [];
       setLogs = [];
       contextLogs = [];
       metadataLogs = [];
       dbLogs = [];
+      settingsLogs = [];
       updateLogs();
       addLog('GET', 'Logs Cleared', 'info', 'All logs have been cleared');
       updateLogs();
