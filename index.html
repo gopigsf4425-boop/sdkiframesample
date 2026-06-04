@@ -800,7 +800,8 @@
       const url = `/agent-api/v1.0/tickets/${encodeURIComponent(ticketId)}`;
       const options = {
         url: url,
-        type: 'GET'
+        type: 'GET',
+        isInternal:true
       };
 
       addRequestLog('Internal API Request', 'info', url);
