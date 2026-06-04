@@ -299,21 +299,24 @@
       <p>Click buttons to retrieve context values directly by path</p>
 
       <div class="test-grid">
-        <button onclick="getContextData('context.orgId')">Get context.orgId</button>
-        <button onclick="getContextData('context.orgName')">Get context.orgName</button>
-        <button onclick="getContextData('context.brandId')">Get context.brandId</button>
-        <button onclick="getContextData('context.brandName')">Get context.brandName</button>
-        <button onclick="getContextData('context.brandUrl')">Get context.brandUrl</button>
-        <button onclick="getContextData('context.defaultBrandUrl')">Get context.defaultBrandUrl</button>
-        <button onclick="getContextData('context.planId')">Get context.planId</button>
-        <button onclick="getContextData('context.planName')">Get context.planName</button>
-        <button onclick="getContextData('context.module')">Get context.module</button>
-        <button onclick="getContextData('context.objectId')">Get context.objectId</button>
-        <button onclick="getContextData('context.product')">Get context.product</button>
-        <button onclick="getContextData('context.user')">Get context.user</button>
-        <button onclick="getContextData('context.user.id')">Get context.user.id</button>
-        <button onclick="getContextData('context.user.email')">Get context.user.email</button>
-        <button onclick="getContextData('context.user.name')">Get context.user.name</button>
+        <button onclick="getContextData('orgId')">Get orgId</button>
+        <button onclick="getContextData('orgName')">Get orgName</button>
+        <button onclick="getContextData('brandId')">Get brandId</button>
+        <button onclick="getContextData('brandName')">Get brandName</button>
+        <button onclick="getContextData('brandUrl')">Get brandUrl</button>
+        <button onclick="getContextData('defaultBrandUrl')">Get defaultBrandUrl</button>
+        <button onclick="getContextData('planId')">Get planId</button>
+        <button onclick="getContextData('planName')">Get planName</button>
+        <button onclick="getContextData('module')">Get module</button>
+        <button onclick="getContextData('objectId')">Get objectId</button>
+        <button onclick="getContextData('product')">Get product</button>
+        <button onclick="getContextData('user')">Get user</button>
+        <button onclick="getContextData('userId')">Get userId</button>
+        <button onclick="getContextData('userEmail')">Get context Email</button>
+        <button onclick="getContextData('userName')">Get context.user.name</button>
+        <button onclick="getContextData('userDisplayName')">Get User Display Name</button>
+        <button onclick="getContextData('userLanguage')">Get User Language</button>
+        <button onclick="getContextData('userTimezone')">Get User Timezone</button>
       </div>
 
       <h3>📊 Context Output</h3>
@@ -326,16 +329,16 @@
       <p>Click buttons to retrieve metadata values directly by path</p>
 
       <div class="test-grid">
-        <button onclick="getMetadataData('metadata.appId')">Get metadata.appId</button>
-        <button onclick="getMetadataData('metadata.installationId')">Get metadata.installationId</button>
-        <button onclick="getMetadataData('metadata.appName')">Get metadata.appName</button>
-        <button onclick="getMetadataData('metadata.version')">Get metadata.version</button>
-        <button onclick="getMetadataData('metadata.locations')">Get metadata.locations</button>
-        <button onclick="getMetadataData('metadata.hasAllBrandAccess')">Get metadata.hasAllBrandAccess</button>
-        <button onclick="getMetadataData('metadata.hasReadAccess')">Get metadata.hasReadAccess</button>
-        <button onclick="getMetadataData('metadata.hasWriteAccess')">Get metadata.hasWriteAccess</button>
-        <button onclick="getMetadataData('metadata.isActive')">Get metadata.isActive</button>
-        <button onclick="getMetadataData('metadata.isEnabled')">Get metadata.isEnabled</button>
+        <button onclick="getMetadataData('appId')">Get appId</button>
+        <button onclick="getMetadataData('installationId')">Get installationId</button>
+        <button onclick="getMetadataData('appName')">Get appName</button>
+        <button onclick="getMetadataData('version')">Get version</button>
+        <button onclick="getMetadataData('locations')">Get locations</button>
+        <button onclick="getMetadataData('hasAllBrandAccess')">Get hasAllBrandAccess</button>
+        <button onclick="getMetadataData('hasReadAccess')">Get hasReadAccess</button>
+        <button onclick="getMetadataData('hasWriteAccess')">Get hasWriteAccess</button>
+        <button onclick="getMetadataData('isActive')">Get isActive</button>
+        <button onclick="getMetadataData('isEnabled')">Get isEnabled</button>
       </div>
 
       <h3>📊 Metadata Output</h3>
@@ -699,7 +702,7 @@
       );
     }
 
-    // Context API - direct path access
+    // Context API - direct access
     function getContextData(path) {
       if (!client) {
         addContextLog(path, 'error', 'Client not initialized');
@@ -707,7 +710,9 @@
         return;
       }
 
-      client.get(path).then(
+      const promise = path ? client.context(path) : client.context();
+
+      promise.then(
         data => {
           const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
           addContextLog(`✅ ${path}`, 'success', displayValue);
@@ -720,7 +725,7 @@
       );
     }
 
-    // Metadata API - direct path access
+    // Metadata API - direct access
     function getMetadataData(path) {
       if (!client) {
         addMetadataLog(path, 'error', 'Client not initialized');
@@ -728,7 +733,9 @@
         return;
       }
 
-      client.get(path).then(
+      const promise = path ? client.metadata(path) : client.metadata();
+
+      promise.then(
         data => {
           const displayValue = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
           addMetadataLog(`✅ ${path}`, 'success', displayValue);
@@ -801,7 +808,7 @@
       const options = {
         url: url,
         type: 'GET',
-        isInternal:true
+        isInternal: true
       };
 
       addRequestLog('Internal API Request', 'info', url);
