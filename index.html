@@ -424,6 +424,15 @@
         </div>
       </div>
 
+      <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-left: 3px solid #667eea; border-radius: 4px;">
+        <h4 style="color: #667eea; margin-bottom: 10px;">🔒 Internal API</h4>
+        <p style="color: #666; font-size: 12px; margin-bottom: 10px;">Enter a ticket ID to call the internal tickets API with GET.</p>
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+          <input id="internalTicketId" type="text" value="153678" placeholder="Enter ticket ID" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+          <button onclick="getInternalTicketDetails()" style="padding: 10px 20px;">GET Internal Ticket</button>
+        </div>
+      </div>
+
       <div style="margin-bottom: 20px;">
         <h4 style="color: #764ba2; margin-bottom: 10px;">🔗 Pipedrive API</h4>
         <div class="test-grid">
@@ -769,6 +778,41 @@
         },
         err => {
           addRequestLog('❌ Create Failed', 'error', err.message || 'Unknown error');
+          updateLogs();
+        }
+      );
+    }
+
+    function getInternalTicketDetails() {
+      if (!client) {
+        addRequestLog('Internal Ticket', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const ticketId = document.getElementById('internalTicketId').value.trim();
+      if (!ticketId) {
+        addRequestLog('Internal Ticket', 'error', 'Please enter a ticket ID');
+        updateLogs();
+        return;
+      }
+
+      const url = `/agent-api/v1.0/tickets/${encodeURIComponent(ticketId)}`;
+      const options = {
+        url: url,
+        type: 'GET'
+      };
+
+      addRequestLog('Internal API Request', 'info', url);
+
+      client.request(options).then(
+        response => {
+          const displayValue = typeof response === 'object' ? JSON.stringify(response, null, 2) : String(response);
+          addRequestLog(`✅ Internal Ticket ${ticketId}`, 'success', displayValue);
+          updateLogs();
+        },
+        err => {
+          addRequestLog(`❌ Internal Ticket ${ticketId}`, 'error', err.message || 'Unknown error');
           updateLogs();
         }
       );
