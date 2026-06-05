@@ -871,9 +871,8 @@
         type: 'GET',
         headers: {
           'Authorization': 'Basic {{basic_auth.token}}',
-          'username': '{{settings.username}}',
-          'password': '{{settings.password}}'
-        }
+          'username': '{{setting.username}}',
+          'password': '{{setting.password}}'
       };
 
       addRequestLog('Fetching Jira Status', 'info', 'https://techinnovatorti.atlassian.net/rest/api/3/status');
