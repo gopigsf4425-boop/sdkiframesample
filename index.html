@@ -201,6 +201,8 @@
       <button class="tab-button" onclick="switchTab('metadata')">🪪 Metadata API</button>
       <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
       <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
+      <button class="tab-button" onclick="switchTab('trigger')">🚀 Trigger</button>
+      <button class="tab-button" onclick="switchTab('invoke')">🔧 Invoke</button>
       <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
       <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings API</button>
       <button class="tab-button" onclick="switchTab('logs')">📊 Logs</button>
@@ -415,6 +417,122 @@
       
       <h3>📊 Events Output</h3>
       <div id="events-log" class="output"></div>
+    </div>
+
+    <!-- Trigger Tab -->
+    <div id="trigger" class="tab-content">
+      <h3>🚀 Trigger Custom Event</h3>
+      <p style="color: #666; margin-bottom: 12px; font-size: 13px;">Send a custom event (uses SDK `client.trigger()` when available, falls back to posting to host).</p>
+      <div class="set-input" style="margin-bottom:12px;">
+        <div>
+          <label style="display:block; font-size:11px; color:#333; margin-bottom:4px;">Event name</label>
+          <input id="triggerEventName" type="text" value="testEventTrigger" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
+        </div>
+        <div>
+          <label style="display:block; font-size:11px; color:#333; margin-bottom:4px;">&nbsp;</label>
+          <button onclick="testEventTrigger()">Trigger</button>
+        </div>
+        <textarea id="triggerEventPayload" style="grid-column:1 / -1; margin-top:8px; min-height:80px; padding:8px; border:1px solid #ddd; border-radius:4px;">{"message":"hello from iframe"}</textarea>
+      </div>
+
+      <div style="margin-bottom:12px; padding:12px; background:#f9f9f9; border-left:3px solid #6c5ce7; border-radius:6px;">
+        <h4 style="color:#6c5ce7; margin-bottom:8px;">SELF-TRIGGER DEMO (SUBSCRIBE FIRST)</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="customSubscribeEventName" type="text" value="testEventTrigger" style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <div style="display:flex; gap:8px;">
+            <button onclick="testCustomEventSubscribe()" style="background:#6c5ce7;">Listen</button>
+            <button onclick="testCustomEventThenTrigger()" style="background:#fd79a8;">Then Trigger</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>📊 Trigger Output</h3>
+      <div id="trigger-log" class="output"></div>
+    </div>
+
+    <!-- Invoke API -->
+    <div id="invoke" class="tab-content">
+      <h3>🔧 Invoke API Tests</h3>
+      <p>Trigger platform methods via <strong>client.invoke()</strong></p>
+
+      <div style="margin-bottom:20px; padding:12px; background:#f9f9f9; border-left:3px solid #667eea; border-radius:4px;">
+        <h4 style="color:#667eea; margin-bottom:8px;">APP VISIBILITY</h4>
+        <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;">
+          <input id="invoke-width" placeholder="width (e.g. 100% or 400px)" style="padding:8px; border:1px solid #ddd; border-radius:4px;" value="100%">
+          <input id="invoke-height" placeholder="height (e.g. 400px)" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:120px;" value="400px">
+          <button style="grid-column:2/3;" onclick="invokeResize()">Invoke Resize</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="doInvoke('hideApp')">Hide App</button>
+          <button onclick="doInvoke('showApp')">Show App</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">NOTIFY</h4>
+        <div style="display:grid; grid-template-columns:1fr 120px; gap:8px; align-items:center;">
+          <input id="invoke-notify-msg" placeholder="Your message..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <select id="invoke-notify-type" style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <option value="notice">notice</option>
+            <option value="warning">warning</option>
+            <option value="error">error</option>
+          </select>
+          <button onclick="invokeNotify()">Invoke Notify</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">COMMENT ACTIONS</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="invoke-comment-text" placeholder="Text to append..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeCommentAppend()">Invoke</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">APPS TRAY</h4>
+        <div style="display:flex; gap:8px;">
+          <button onclick="doInvoke('appsTray.show')">appsTray.show</button>
+          <button onclick="doInvoke('appsTray.hide')">appsTray.hide</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px; padding:12px; background:#f9f9f9; border-left:3px solid #667eea; border-radius:4px;">
+        <h4 style="color:#667eea; margin-bottom:8px;">ROUTE TO</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-ticket-id" placeholder="ticket id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToTicket()">routeTo ticket id</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-user-id" placeholder="user id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToUser()">routeTo user id</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-contactgroup-id" placeholder="contactgroup id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToContactGroup()">routeTo contactgroup id</button>
+        </div>
+
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="doInvoke('routeTo', { route: 'new_ticket' })">routeTo new ticket</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">MODAL (INSTANCES.CREATE)</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="modal-url" placeholder="assets/iframe.html" style="padding:8px; border:1px solid #ddd; border-radius:4px;" value="assets/iframe.html">
+          <button onclick="invokeOpenModal()">Open modal</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <button onclick="invokeBulkHideResize()">Invoke Both (hide + resize)</button>
+      </div>
+
+      <h3>📊 Invoke Output</h3>
+      <div id="invoke-log" class="output"></div>
     </div>
 
     <!-- Request API -->
@@ -750,6 +868,110 @@
       );
     }
 
+    // Invoke helpers + logs
+    let invokeLogs = [];
+
+    function addInvokeLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      invokeLogs.push(entry);
+      if (invokeLogs.length > LOG_LIMIT) invokeLogs.shift();
+      console.log(`[INVOKE]`, title, message);
+    }
+
+    function doInvoke(method, payload) {
+      if (!client) {
+        addInvokeLog(method, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      client.invoke(method, payload || {}).then(
+        res => {
+          const display = typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res);
+          addInvokeLog(`✅ ${method}`, 'success', display);
+          updateLogs();
+        },
+        err => {
+          addInvokeLog(`❌ ${method}`, 'error', err && err.message ? err.message : String(err));
+          updateLogs();
+        }
+      );
+    }
+
+    function invokeResize() {
+      const w = document.getElementById('invoke-width').value || '100%';
+      const h = document.getElementById('invoke-height').value || '400px';
+      doInvoke('resize', { width: w, height: h });
+    }
+
+    function invokeNotify() {
+      const msg = document.getElementById('invoke-notify-msg').value || '';
+      const type = document.getElementById('invoke-notify-type').value || 'notice';
+      doInvoke('notify', { type: type, message: msg });
+    }
+
+    function invokeCommentAppend() {
+      const txt = document.getElementById('invoke-comment-text').value || '';
+      doInvoke('comment.appendText', { text: txt });
+    }
+
+    function invokeRouteToTicket() {
+      const id = document.getElementById('route-ticket-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter ticket id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { ticketId: id });
+    }
+
+    function invokeRouteToUser() {
+      const id = document.getElementById('route-user-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter user id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { userId: id });
+    }
+
+    function invokeRouteToContactGroup() {
+      const id = document.getElementById('route-contactgroup-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter contactgroup id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { contactGroupId: id });
+    }
+
+    function invokeOpenModal() {
+      const url = document.getElementById('modal-url').value.trim();
+      if (!url) {
+        addInvokeLog('instances.create', 'error', 'Please enter a URL');
+        updateLogs();
+        return;
+      }
+      client.invoke('instances.create', { url: url, size: { width: '500px', height: '400px' } }).then(
+        res => {
+          addInvokeLog('instances.create', 'success', typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res));
+          updateLogs();
+        }
+      ).catch(err => {
+        addInvokeLog('instances.create', 'error', err && err.message ? err.message : String(err));
+        updateLogs();
+      });
+    }
+
+    function invokeBulkHideResize() {
+      doInvoke('appsTray.hide');
+      setTimeout(() => {
+        const w = document.getElementById('invoke-width').value || '100%';
+        const h = document.getElementById('invoke-height').value || '400px';
+        doInvoke('resize', { width: w, height: h });
+      }, 250);
+    }
+
     // Request API - Create BoldDesk Ticket
     let requestLogs = [];
     function createBoldDeskTicket() {
@@ -984,6 +1206,96 @@
       console.log('[Notify]', message);
     }
 
+    // Trigger helpers - use SDK client.trigger() when available, otherwise post to host
+    function triggerCustomEventUsingClient(eventName, payload) {
+      if (client && typeof client.trigger === 'function') {
+        client.trigger(eventName, payload).then(res => {
+          const display = typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res);
+          addEventLog(eventName, 'success', `Triggered via SDK: ${display}`);
+          updateLogs();
+          const tl = document.getElementById('trigger-log');
+          if (tl) tl.textContent = `✅ Triggered via SDK: ${display}`;
+        }).catch(err => {
+          addEventLog(eventName, 'error', err && err.message ? err.message : String(err));
+          updateLogs();
+          const tl = document.getElementById('trigger-log');
+          if (tl) tl.textContent = `❌ SDK Trigger failed: ${err && err.message ? err.message : String(err)}`;
+        });
+      } else {
+        try {
+          window.parent.postMessage({ type: 'event.trigger', event: eventName, payload: payload }, '*');
+          addEventLog(eventName, 'info', 'Posted event.trigger to host');
+          updateLogs();
+          const tl = document.getElementById('trigger-log');
+          if (tl) tl.textContent = `📤 Posted to host: ${eventName} - ${JSON.stringify(payload)}`;
+        } catch (e) {
+          addEventLog(eventName, 'error', e.message || String(e));
+          updateLogs();
+          const tl = document.getElementById('trigger-log');
+          if (tl) tl.textContent = `❌ PostMessage failed: ${e.message || String(e)}`;
+        }
+      }
+    }
+
+    function testEventTrigger() {
+      const name = (document.getElementById('triggerEventName') || {value:''}).value.trim() || 'testEventTrigger';
+      const payloadText = (document.getElementById('triggerEventPayload') || {value:'{}'}).value || '{}';
+      let payload = {};
+      try { payload = JSON.parse(payloadText); }
+      catch (e) {
+        addEventLog('trigger', 'error', 'Invalid JSON payload');
+        updateLogs();
+        const tl = document.getElementById('trigger-log');
+        if (tl) tl.textContent = '❌ Invalid JSON payload';
+        return;
+      }
+      triggerCustomEventUsingClient(name, payload);
+    }
+
+    // Subscribe to a custom event name (self-listen)
+    function testCustomEventSubscribe() {
+      const name = (document.getElementById('customSubscribeEventName') || {value:''}).value.trim();
+      if (!name) {
+        const tl = document.getElementById('trigger-log');
+        if (tl) tl.textContent = '❗ Enter an event name to subscribe';
+        return;
+      }
+
+      // Reuse existing listener registration
+      listenToEvent(name);
+      const tl = document.getElementById('trigger-log');
+      if (tl) tl.textContent = `✅ Subscribed to ${name} - waiting for events`;
+    }
+
+    // Subscribe first, then immediately trigger the event so the current instance receives it
+    function testCustomEventThenTrigger() {
+      const name = (document.getElementById('customSubscribeEventName') || {value:''}).value.trim();
+      if (!name) {
+        const tl = document.getElementById('trigger-log');
+        if (tl) tl.textContent = '❗ Enter an event name to subscribe/trigger';
+        return;
+      }
+
+      // Ensure listener exists
+      if (!eventListeners[name]) {
+        listenToEvent(name);
+      }
+
+      // Small delay to ensure listener registration propagates before triggering
+      setTimeout(() => {
+        // Use the same payload input as the Trigger pane
+        const payloadText = (document.getElementById('triggerEventPayload') || {value:'{}'}).value || '{}';
+        let payload = {};
+        try { payload = JSON.parse(payloadText); }
+        catch (e) {
+          const tl = document.getElementById('trigger-log');
+          if (tl) tl.textContent = '❌ Invalid JSON payload';
+          return;
+        }
+        triggerCustomEventUsingClient(name, payload);
+      }, 150);
+    }
+
     // Logging
     function addLog(type, title, logType, message) {
       const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
@@ -1070,6 +1382,18 @@
             eventsLogDiv.scrollTop = eventsLogDiv.scrollHeight;
           } else {
             eventsLogDiv.innerHTML = '<div class="log-entry info">No events yet - waiting for events from platform</div>';
+          }
+        }
+      } else if (currentTab === 'invoke') {
+        const invokeLogDiv = document.getElementById('invoke-log');
+        if (invokeLogDiv) {
+          if (invokeLogs.length > 0) {
+            invokeLogDiv.innerHTML = invokeLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.title}<br>${log.message}</div>`
+            ).join('');
+            invokeLogDiv.scrollTop = invokeLogDiv.scrollHeight;
+          } else {
+            invokeLogDiv.innerHTML = '<div class="log-entry info">No invoke logs yet - invoke actions to see output</div>';
           }
         }
       } else if (currentTab === 'request') {
