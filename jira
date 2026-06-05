@@ -872,7 +872,7 @@
         headers: {
           'Authorization': 'Basic {{basic_auth.token}}',
           'username': '{{settings.username}}',
-          'password': '{{setting.password}}'
+          'password': '{{settings.password}}'
         }
       };
 
