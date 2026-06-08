@@ -201,6 +201,7 @@
       <button class="tab-button" onclick="switchTab('metadata')">🪪 Metadata API</button>
       <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
       <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
+      <button class="tab-button" onclick="switchTab('invoke')">🔧 Invoke</button>
       <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
       <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings API</button>
       <button class="tab-button" onclick="switchTab('logs')">📊 Logs</button>
@@ -416,7 +417,91 @@
       <h3>📊 Events Output</h3>
       <div id="events-log" class="output"></div>
     </div>
+ <!-- Invoke API -->
+    <div id="invoke" class="tab-content">
+      <h3>🔧 Invoke API Tests</h3>
+      <p>Trigger platform methods via <strong>client.invoke()</strong></p>
 
+      <div style="margin-bottom:20px; padding:12px; background:#f9f9f9; border-left:3px solid #667eea; border-radius:4px;">
+        <h4 style="color:#667eea; margin-bottom:8px;">APP VISIBILITY</h4>
+        <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;">
+          <input id="invoke-width" placeholder="width (e.g. 100% or 400px)" style="padding:8px; border:1px solid #ddd; border-radius:4px;" value="100%">
+          <input id="invoke-height" placeholder="height (e.g. 400px)" style="padding:8px; border:1px solid #ddd; border-radius:4px; width:120px;" value="400px">
+          <button style="grid-column:2/3;" onclick="invokeResize()">Invoke Resize</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="doInvoke('hideApp')">Hide App</button>
+          <button onclick="doInvoke('showApp')">Show App</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">NOTIFY</h4>
+        <div style="display:grid; grid-template-columns:1fr 120px; gap:8px; align-items:center;">
+          <input id="invoke-notify-msg" placeholder="Your message..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <select id="invoke-notify-type" style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <option value="notice">notice</option>
+            <option value="warning">warning</option>
+            <option value="error">error</option>
+          </select>
+          <button onclick="invokeNotify()">Invoke Notify</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">COMMENT ACTIONS</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="invoke-comment-text" placeholder="Text to append..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeCommentAppend()">Invoke</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">APPS TRAY</h4>
+        <div style="display:flex; gap:8px;">
+          <button onclick="doInvoke('appsTray.show')">appsTray.show</button>
+          <button onclick="doInvoke('appsTray.hide')">appsTray.hide</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px; padding:12px; background:#f9f9f9; border-left:3px solid #667eea; border-radius:4px;">
+        <h4 style="color:#667eea; margin-bottom:8px;">ROUTE TO</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-ticket-id" placeholder="ticket id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToTicket()">routeTo ticket id</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-user-id" placeholder="user id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToUser()">routeTo user id</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+          <input id="route-contactgroup-id" placeholder="contactgroup id..." style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <button onclick="invokeRouteToContactGroup()">routeTo contactgroup id</button>
+        </div>
+
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="doInvoke('routeTo', { route: 'new_ticket' })">routeTo new ticket</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="color:#764ba2; margin-bottom:8px;">MODAL (INSTANCES.CREATE)</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="modal-url" placeholder="assets/iframe.html" style="padding:8px; border:1px solid #ddd; border-radius:4px;" value="assets/iframe.html">
+          <button onclick="invokeOpenModal()">Open modal</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <button onclick="invokeBulkHideResize()">Invoke Both (hide + resize)</button>
+      </div>
+
+      <h3>📊 Invoke Output</h3>
+      <div id="invoke-log" class="output"></div>
+    </div>
+    
     <!-- Request API -->
     <div id="request" class="tab-content">
       <h3>📡 Request API Tests</h3>
@@ -748,6 +833,110 @@
           updateLogs();
         }
       );
+    }
+
+      // Invoke helpers + logs
+    let invokeLogs = [];
+
+    function addInvokeLog(title, logType, message) {
+      const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
+      invokeLogs.push(entry);
+      if (invokeLogs.length > LOG_LIMIT) invokeLogs.shift();
+      console.log(`[INVOKE]`, title, message);
+    }
+
+    function doInvoke(method, payload) {
+      if (!client) {
+        addInvokeLog(method, 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      client.invoke(method, payload || {}).then(
+        res => {
+          const display = typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res);
+          addInvokeLog(`✅ ${method}`, 'success', display);
+          updateLogs();
+        },
+        err => {
+          addInvokeLog(`❌ ${method}`, 'error', err && err.message ? err.message : String(err));
+          updateLogs();
+        }
+      );
+    }
+
+    function invokeResize() {
+      const w = document.getElementById('invoke-width').value || '100%';
+      const h = document.getElementById('invoke-height').value || '400px';
+      doInvoke('resize', { width: w, height: h });
+    }
+
+    function invokeNotify() {
+      const msg = document.getElementById('invoke-notify-msg').value || '';
+      const type = document.getElementById('invoke-notify-type').value || 'notice';
+      doInvoke('notify', { type: type, message: msg });
+    }
+
+    function invokeCommentAppend() {
+      const txt = document.getElementById('invoke-comment-text').value || '';
+      doInvoke('comment.appendText', { text: txt });
+    }
+
+    function invokeRouteToTicket() {
+      const id = document.getElementById('route-ticket-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter ticket id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { ticketId: id });
+    }
+
+    function invokeRouteToUser() {
+      const id = document.getElementById('route-user-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter user id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { userId: id });
+    }
+
+    function invokeRouteToContactGroup() {
+      const id = document.getElementById('route-contactgroup-id').value.trim();
+      if (!id) {
+        addInvokeLog('routeTo', 'error', 'Please enter contactgroup id');
+        updateLogs();
+        return;
+      }
+      doInvoke('routeTo', { contactGroupId: id });
+    }
+
+    function invokeOpenModal() {
+      const url = document.getElementById('modal-url').value.trim();
+      if (!url) {
+        addInvokeLog('instances.create', 'error', 'Please enter a URL');
+        updateLogs();
+        return;
+      }
+      client.invoke('instances.create', { url: url, size: { width: '500px', height: '400px' } }).then(
+        res => {
+          addInvokeLog('instances.create', 'success', typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res));
+          updateLogs();
+        }
+      ).catch(err => {
+        addInvokeLog('instances.create', 'error', err && err.message ? err.message : String(err));
+        updateLogs();
+      });
+    }
+
+    function invokeBulkHideResize() {
+      doInvoke('appsTray.hide');
+      setTimeout(() => {
+        const w = document.getElementById('invoke-width').value || '100%';
+        const h = document.getElementById('invoke-height').value || '400px';
+        doInvoke('resize', { width: w, height: h });
+      }, 250);
     }
     
     // Request API - Create BoldDesk Ticket
