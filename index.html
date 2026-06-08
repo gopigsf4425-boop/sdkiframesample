@@ -201,6 +201,7 @@
       <button class="tab-button" onclick="switchTab('metadata')">🪪 Metadata API</button>
       <button class="tab-button" onclick="switchTab('database')">🗄️ Database API</button>
       <button class="tab-button" onclick="switchTab('events')">🎯 Events</button>
+      <button class="tab-button" onclick="switchTab('trigger')">🚀 Trigger</button>
       <button class="tab-button" onclick="switchTab('invoke')">🔧 Invoke</button>
       <button class="tab-button" onclick="switchTab('request')">📡 Request API</button>
       <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings API</button>
@@ -416,7 +417,39 @@
       
       <h3>📊 Events Output</h3>
       <div id="events-log" class="output"></div>
+      
     </div>
+ <!-- Trigger Tab Content -->
+    <div id="trigger" class="tab-content">
+      <h3>🚀 Trigger Events</h3>
+      <p>Send custom events to other app instances using <strong>client.trigger()</strong>.</p>
+
+      <div style="margin-bottom:12px; padding:12px; background:#f9f9f9; border-left:3px solid #e84393; border-radius:4px;">
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="customEventName" placeholder="Event name (e.g. incomingcall)" style="padding:8px; border:1px solid #ddd; border-radius:4px;" value="incomingcall">
+          <button onclick="testEventTrigger()" style="background:#e84393; padding:8px 12px;">Trigger</button>
+        </div>
+        <div style="margin-top:8px;">
+          <label style="display:block; font-size:12px; color:#333; margin-bottom:6px;">Payload (JSON)</label>
+          <textarea id="customEventPayload" placeholder='{"key":"1234"}' style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; min-height:80px; font-family: 'Monaco', monospace;">{"key":"1234"}</textarea>
+        </div>
+      </div>
+      <!-- SELF-TRIGGER DEMO (SUBSCRIBE FIRST) -->
+      <div style="margin-bottom:12px; padding:12px; background:#faf7ff; border-left:3px solid #6c5ce7; border-radius:4px;">
+        <h4 style="color:#6c5ce7; margin-bottom:8px;">SELF-TRIGGER DEMO (SUBSCRIBE FIRST)</h4>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <input id="customSubscribeEventName" placeholder="Subscribe to (e.g. incomingcall)" style="padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <div style="display:flex; gap:8px;">
+            <button onclick="testCustomEventSubscribe()" style="background:#6c5ce7; padding:8px 12px;">Listen</button>
+            <button onclick="testCustomEventThenTrigger()" style="background:#fd79a8; padding:8px 12px;">Then Trigger</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>📊 Trigger Output</h3>
+      <div id="trigger-log" class="output"></div>
+    </div>
+
  <!-- Invoke API -->
     <div id="invoke" class="tab-content">
       <h3>🔧 Invoke API Tests</h3>
@@ -1171,6 +1204,71 @@
       console.log('[Notify]', message);
     }
 
+    // Custom event helpers + trigger (replicated from app.html)
+    function getCustomEventName() {
+      const input = document.getElementById('customEventName');
+      return input ? input.value.trim() : '';
+    }
+
+    function getCustomEventPayload() {
+      const input = document.getElementById('customEventPayload');
+      return input ? input.value.trim() : '';
+    }
+
+    function getCustomEventSafePayload(payloadText) {
+      if (payloadText === undefined || payloadText === null || payloadText === '') {
+        return {};
+      }
+
+      if (typeof payloadText === 'object') {
+        return payloadText;
+      }
+
+      try {
+        return JSON.parse(payloadText);
+      } catch (error) {
+        return {
+          __raw: String(payloadText),
+          __parseError: error.message
+        };
+      }
+    }
+
+    function testEventTrigger(eventName, data) {
+      if (!client) {
+        addEventLog('trigger', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const resolvedEventName = eventName || getCustomEventName() || 'custom.app.event';
+      const resolvedPayload = data !== undefined ? data : getCustomEventSafePayload(getCustomEventPayload());
+
+      if (!resolvedEventName) {
+        addEventLog('trigger', 'error', 'Please enter an event name');
+        updateLogs();
+        return;
+      }
+
+      client.trigger(resolvedEventName, resolvedPayload).then(
+        result => {
+          addEventLog(resolvedEventName, 'success', 'Event triggered: ' + JSON.stringify(resolvedPayload));
+          // Also add to a trigger-specific log area if present
+          const el = document.getElementById('trigger-log');
+          if (el) {
+            const ts = new Date().toLocaleTimeString();
+            el.innerHTML += `<div class="log-entry success"><strong>${ts}</strong> | trigger('${resolvedEventName}'): ${JSON.stringify(resolvedPayload)}</div>`;
+            el.scrollTop = el.scrollHeight;
+          }
+          updateLogs();
+        },
+        err => {
+          addEventLog(resolvedEventName, 'error', err && err.message ? err.message : String(err));
+          updateLogs();
+        }
+      );
+    }
+
     // Logging
     function addLog(type, title, logType, message) {
       const entry = { title, type: logType, message, timestamp: new Date().toLocaleTimeString() };
@@ -1257,6 +1355,18 @@
             eventsLogDiv.scrollTop = eventsLogDiv.scrollHeight;
           } else {
             eventsLogDiv.innerHTML = '<div class="log-entry info">No events yet - waiting for events from platform</div>';
+          }
+        }
+      } else if (currentTab === 'trigger') {
+        const triggerDiv = document.getElementById('trigger-log');
+        if (triggerDiv) {
+          if (eventLogs.length > 0) {
+            triggerDiv.innerHTML = eventLogs.map(log =>
+              `<div class="log-entry ${log.type}"><strong>${log.timestamp}</strong> | ${log.eventName}<br>${log.message}</div>`
+            ).join('');
+            triggerDiv.scrollTop = triggerDiv.scrollHeight;
+          } else {
+            triggerDiv.innerHTML = '<div class="log-entry info">No trigger logs yet - trigger events using the UI above</div>';
           }
         }
       } else if (currentTab === 'request') {
@@ -1507,6 +1617,57 @@
       updateLogs();
       addLog('GET', 'Logs Cleared', 'info', 'All logs have been cleared');
       updateLogs();
+    }
+
+    // Subscribe-only helpers for Trigger UI
+    function testCustomEventSubscribe() {
+      if (!client) {
+        addEventLog('subscribe', 'error', 'Client not initialized');
+        updateLogs();
+        return;
+      }
+
+      const input = document.getElementById('customSubscribeEventName');
+      const eventName = input ? input.value.trim() : '';
+      if (!eventName) {
+        addEventLog('subscribe', 'warning', 'Please enter an event name to subscribe to.');
+        updateLogs();
+        return;
+      }
+
+      if (eventListeners[eventName]) {
+        addEventLog(eventName, 'warning', 'Listener already registered.');
+        updateLogs();
+        return;
+      }
+
+      const callback = function(payload) {
+        const displayValue = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : String(payload);
+        addEventLog(eventName, 'success', 'Event received (self-subscribe): ' + displayValue);
+        updateLogs();
+      };
+
+      client.on(eventName, callback);
+      eventListeners[eventName] = callback;
+      addEventLog(`on('${eventName}')`, 'success', 'Listener registered and waiting for events.');
+      updateLogs();
+    }
+
+    function testCustomEventThenTrigger() {
+      const input = document.getElementById('customSubscribeEventName');
+      const eventName = input ? input.value.trim() : '';
+      if (!eventName) {
+        addEventLog('trigger', 'warning', 'Please enter an event name first.');
+        updateLogs();
+        return;
+      }
+
+      if (!eventListeners[eventName]) {
+        testCustomEventSubscribe();
+      }
+
+      const payload = getCustomEventSafePayload(getCustomEventPayload());
+      testEventTrigger(eventName, payload);
     }
 
     // Initial log
