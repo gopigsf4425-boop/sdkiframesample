@@ -1258,7 +1258,22 @@
         return;
       }
 
-      client.trigger(resolvedEventName, resolvedPayload).then(
+     // Provide an optional callback to receive responses from listeners
+      const callback = function(callbackPayload) {
+        const display = typeof callbackPayload === 'object' ? JSON.stringify(callbackPayload, null, 2) : String(callbackPayload);
+        addEventLog(resolvedEventName + ' (callback)', 'info', 'Callback received: ' + display);
+        // Also append to trigger log area if present
+        const elcb = document.getElementById('trigger-log');
+        if (elcb) {
+          const ts = new Date().toLocaleTimeString();
+          elcb.innerHTML += `<div class="log-entry info"><strong>${ts}</strong> | callback('${resolvedEventName}'): ${display}</div>`;
+          elcb.scrollTop = elcb.scrollHeight;
+        }
+        updateLogs();
+      };
+
+      // Call trigger with callback (callback is second argument per SDK)
+      client.trigger(resolvedEventName, callback, resolvedPayload).then(
         result => {
           addEventLog(resolvedEventName, 'success', 'Event triggered: ' + JSON.stringify(resolvedPayload));
           // Also add to a trigger-specific log area if present
